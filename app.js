@@ -108,7 +108,6 @@ disp(fobj(xo));
 // Route for returning Primal Simplex MATLAB code
 app.get('/simplex', (req, res) => {
     const code = `
-
 % Simplex Method
 %max z=2x1+5X2
 %x1+4x2<=24
