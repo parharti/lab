@@ -108,22 +108,18 @@ disp(fobj(xo));
 // Route for returning Primal Simplex MATLAB code
 app.get('/simplex', (req, res) => {
     const code = `
+% Simplex Method
+% max z=2x1+5X2
+% x1+4x2<=24
+% 3x1+1x2<=21
+% x1+x2<=9
 clc;
 clear all;
 format short;
-
-% Simplex Method - Primal
-% Objective: max z = 2x1 + 5x2
-% Constraints:
-% x1 + 4x2 <= 24
-% 3x1 + 1x2 <= 21
-% x1 + x2 <= 9
-
 Noofvariables = 2;
 C = [2 5];
 a = [1 4; 3 1; 1 1];
 b = [24; 21; 9];
-
 s = eye(size(a, 1));
 A = [a s b];
 cost = zeros(1, size(A, 2));
@@ -136,17 +132,17 @@ simptable.Properties.VariableNames(1:size(zcj, 2)) = {'x_1', 'x_2', 's_1', 's_2'
 RUN = true;
 while RUN
     if any(zjcj < 0)
-        fprintf('The current BFS is not optimal.\\n');
-        zc = zjcj(1:end-1);
+        fprintf('The current BFS is not optimal \\n');
+        zc = zjcj(1:end - 1);
         [Enter_val, pvt_col] = min(zc);
         if all(A(:, pvt_col) <= 0)
-            error('LPP is Unbounded. All entries in column %d are <= 0.', pvt_col);
+            error('LPP is Unbounded, all entries are <=0 in column %d', pvt_col);
         else
             sol = A(:, end);
             column = A(:, pvt_col);
             for i = 1:size(A, 1)
                 if column(i) > 0
-                    ratio(i) = sol(i) / column(i);
+                    ratio(i) = sol(i) ./ column(i);
                 else
                     ratio(i) = inf;
                 end
@@ -155,21 +151,21 @@ while RUN
         end
         bv(pvt_row) = pvt_col;
         pvt_key = A(pvt_row, pvt_col);
-        A(pvt_row, :) = A(pvt_row, :) / pvt_key;
+        A(pvt_row, :) = A(pvt_row, :) ./ pvt_key;
         for i = 1:size(A, 1)
-            if i !== pvt_row
-                A(i, :) = A(i, :) - A(i, pvt_col) * A(pvt_row, :);
+            if i ~= pvt_row
+                A(i, :) = A(i, :) - A(i, pvt_col) .* A(pvt_row, :);
             end
         end
-        zjcj = zjcj - zjcj(pvt_col) * A(pvt_row, :);
+        zjcj = zjcj - zjcj(pvt_col) .* A(pvt_row, :);
         zcj = [zjcj; A];
         table = array2table(zcj);
         table.Properties.VariableNames(1:size(zcj, 2)) = {'x_1', 'x_2', 's_1', 's_2', 's_3', 'sol'};
     else
         RUN = false;
-        fprintf('The current BFS is optimal.\\n');
+        fprintf('The current BFS is optimal \\n');
     end
-end
+end;
     `;
     res.type('text/plain').send(code);
 });
@@ -177,9 +173,9 @@ end
 // Route for returning Dual Simplex MATLAB code
 app.get('/dual', (req, res) => {
     const code = `
-format short;
-clc;
-clear all;
+format short
+clc
+clear all
 
 C = [-2 0 -1 0 0 0];
 A = [-1 -1 1 1 0 -5; -1 2 -4 0 1 -8];
@@ -188,7 +184,7 @@ zjcj = C(ib) * A - C;
 RUN = true;
 while RUN
     if any(A(:, size(A, 2)) < 0)
-        fprintf('The current BFS is not feasible.\\n');
+        fprintf('The current BFS is not feasible');
         [lvg_val, pvt_row] = min(A(:, size(A, 2)));
         for i = 1:size(A, 2) - 1
             if A(pvt_row, i) < 0
@@ -200,18 +196,18 @@ while RUN
         [ent_val, pvt_col] = max(m);
         A(pvt_row, :) = A(pvt_row, :) / A(pvt_row, pvt_col);
         for i = 1:size(A, 1)
-            if i !== pvt_row
-                A(i, :) = A(i, :) - A(i, pvt_col) * A(pvt_row, :);
+            if i ~= pvt_row
+                A(i, :) = A(i, :) - A(i, pvt_col) .* A(pvt_row, :);
             end
         end
         ib(pvt_row) = pvt_col;
-        zjcj = zjcj - zjcj(pvt_col) * A(pvt_row, :);
+        zjcj = zjcj - zjcj(pvt_col) .* A(pvt_row, :);
         ZCj = [zjcj; A];
         TABLE = array2table(ZCj);
         TABLE.Properties.VariableNames(1:size(ZCj, 2)) = {'x_1', 'x_2', 'x3', 's_1', 's_2', 'sol'};
     else
-        fprintf('The current BFS is feasible.\\n');
         RUN = false;
+        fprintf('The current BFS is feasible and optimal \\n');
     end
 end
     `;
